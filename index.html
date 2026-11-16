@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ブラウザの現在時刻を、秒ごとに姿を変える二次元コードで表示します。">
+  <title>二次元コード時計</title>
+  <link rel="stylesheet" href="./clock.css">
+  <script defer src="./vendor/qrcodegen-v1.8.0.js"></script>
+  <script defer src="./clock.js"></script>
+  <noscript><style>.clock { display: none; }</style></noscript>
+</head>
+<body>
+  <main aria-label="二次元コード時計">
+    <time class="visually-hidden" id="time"></time>
+    <div class="clock" aria-hidden="true">
+      <canvas id="matrix"></canvas>
+      <span class="dial"></span>
+    </div>
+    <noscript>
+      時計の表示には JavaScript が必要です。
+    </noscript>
+  </main>
+</body>
+</html>

@@ -1,0 +1,128 @@
+:root {
+  color-scheme: light;
+  --field: #dce6df;
+  --glow: #faffdf;
+  --paper: #f5fcf4;
+  --ink: #172d2e;
+  --ink-end: #28594d;
+  --flash: #087b68;
+  --dial: #277262;
+  --shadow: #24443c;
+}
+
+:root[data-theme="dawn"] {
+  --field: #ead4cc;
+  --glow: #ffedc4;
+  --paper: #fff8ed;
+  --ink: #392135;
+  --ink-end: #773b46;
+  --flash: #a74626;
+  --dial: #b05826;
+  --shadow: #694531;
+}
+
+:root[data-theme="dusk"] {
+  color-scheme: dark;
+  --field: #2a2238;
+  --glow: #654c6e;
+  --paper: #fbf1f7;
+  --ink: #322043;
+  --ink-end: #6a3a63;
+  --flash: #96397a;
+  --dial: #985176;
+  --shadow: #140d1f;
+}
+
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --field: #111226;
+  --glow: #343052;
+  --paper: #f1effa;
+  --ink: #24193d;
+  --ink-end: #444580;
+  --flash: #6351a8;
+  --dial: #5a4d9b;
+  --shadow: #060615;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at center, var(--glow), transparent 68%), var(--field);
+  color: var(--ink);
+}
+
+main {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+}
+
+.clock {
+  position: relative;
+  width: min(76vw, 66vh, 28rem);
+  width: min(76vw, 66svh, 28rem);
+  aspect-ratio: 1;
+  border-radius: 3%;
+  background: var(--paper);
+  box-shadow: 0 16px 56px color-mix(in srgb, var(--shadow) 23%, transparent);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dial {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 15.1515%;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--dial);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent);
+  transform: translate(-50%, -50%);
+}
+
+.dial::before,
+.dial::after {
+  content: "";
+  grid-area: 1 / 1;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.dial::before {
+  background: radial-gradient(circle closest-side, currentColor 42%, transparent 45%);
+}
+
+.dial::after {
+  background: repeating-conic-gradient(from -5deg, currentColor 0deg 10deg, transparent 10deg 45deg);
+  mask-image: radial-gradient(circle closest-side, transparent 65%, black 68% 98%, transparent 100%);
+}
+
+[data-theme="night"] .dial::before {
+  width: 48%;
+  background: currentColor;
+  mask-image: radial-gradient(circle at 71% 24%, transparent 43%, black 46%);
+}
+
+[data-theme="night"] .dial::after {
+  content: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
