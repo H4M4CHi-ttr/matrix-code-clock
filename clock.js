@@ -102,11 +102,12 @@ function timeAt(timestamp) {
 function encode(time) {
   const qr = QrCode.encodeSegments([QrSegment.makeAlphanumeric(time.payload)], QrCode.Ecc.HIGH, VERSION, VERSION);
   const { tiles, finders } = layouts[time.quarter];
+  const squareStyle = root.dataset.dotStyle === "square";
   const points = Array(cells.length).fill(null);
   for (const { index, column, row, finder } of cells) {
     if (!finder && qr.getModule(column, row)) {
       const tile = tiles[index];
-      points[tile.index] = tile;
+      points[tile.index] = squareStyle ? { ...tile, square: true } : tile;
     }
   }
   return { ...time, points, finders };
@@ -335,6 +336,10 @@ function refresh() {
   }
 }
 
+document.addEventListener("clockstylechange", () => {
+  prepared = undefined;
+  refresh();
+});
 document.addEventListener("visibilitychange", refresh);
 window.addEventListener("pageshow", refresh);
 reducedMotion.addEventListener("change", refresh);

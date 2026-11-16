@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="ブラウザの現在時刻を、秒ごとに姿を変える二次元コードで表示します。">
   <title>二次元コード時計</title>
-  <link rel="stylesheet" href="./clock.css">
+  <link rel="stylesheet" href="./clock.css?v=8">
   <script defer src="./vendor/qrcodegen-v1.8.0.js"></script>
-  <script defer src="./clock.js?v=7"></script>
-  <noscript><style>.clock { display: none; }</style></noscript>
+  <script defer src="./settings.js?v=8"></script>
+  <script defer src="./clock.js?v=8"></script>
+  <noscript><style>.clock, .settings-button { display: none; }</style></noscript>
 </head>
 <body>
   <main aria-label="二次元コード時計">
@@ -21,5 +22,31 @@
       時計の表示には JavaScript が必要です。
     </noscript>
   </main>
+  <button class="settings-button" id="settings-button" type="button"
+    aria-label="表示設定" aria-haspopup="dialog" aria-controls="settings-drawer" aria-expanded="false">
+    <span aria-hidden="true">⚙︎</span>
+  </button>
+  <dialog class="settings-drawer" id="settings-drawer" aria-labelledby="settings-title">
+    <header class="settings-header">
+      <h1 id="settings-title">設定</h1>
+      <button class="close-button" id="settings-close" type="button" aria-label="設定を閉じる" autofocus>
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
+    <fieldset class="style-choices">
+      <legend>点の形</legend>
+      <label class="style-option">
+        <img src="./assets/style-round.png" alt="" width="112" height="112">
+        <span>まる</span>
+        <input type="radio" name="dot-style" value="round" checked>
+      </label>
+      <label class="style-option">
+        <img src="./assets/style-square.png" alt="" width="112" height="112">
+        <span>しかく</span>
+        <input type="radio" name="dot-style" value="square">
+      </label>
+    </fieldset>
+    <p class="settings-status" id="settings-status" role="status" hidden>このブラウザでは設定を保存できません。ページを開いている間は選択が反映されます。</p>
+  </dialog>
 </body>
 </html>

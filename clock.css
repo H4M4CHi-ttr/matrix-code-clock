@@ -126,3 +126,216 @@ canvas {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+
+.settings-button,
+.close-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.settings-button {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 1;
+  background: var(--paper);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--shadow) 12%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity 280ms ease, transform 280ms ease;
+}
+
+.settings-button span {
+  font: 28px/1 "Segoe UI Symbol", "Apple Symbols", sans-serif;
+}
+
+.settings-button.is-visible {
+  opacity: 0.9;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.settings-button:hover,
+.close-button:hover {
+  background: color-mix(in srgb, var(--paper) 88%, var(--ink));
+}
+
+.settings-button:focus-visible,
+.close-button:focus-visible,
+.style-option:has(input:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.settings-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(360px, 100vw);
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
+  background: var(--paper);
+  color-scheme: light;
+  font: 500 16px/1.6 "Inter", "Yu Gothic UI", "Meiryo", sans-serif;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: transform 280ms ease, opacity 280ms ease,
+    display 280ms allow-discrete, overlay 280ms allow-discrete;
+}
+
+.settings-drawer[open] {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.settings-drawer::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition: background 280ms ease, display 280ms allow-discrete, overlay 280ms allow-discrete;
+}
+
+.settings-drawer[open]::backdrop {
+  background: rgb(0 0 0 / 0.18);
+}
+
+@starting-style {
+  .settings-drawer[open] {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .settings-drawer[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36px;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.close-button span {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.close-button span::before,
+.close-button span::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 18px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+.close-button span::after {
+  transform: rotate(-45deg);
+}
+
+.style-choices {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.style-choices legend {
+  margin-bottom: 14px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.style-option {
+  display: grid;
+  grid-template-columns: 112px 1fr 20px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 2px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.style-option:has(input:checked) {
+  border-color: var(--ink);
+}
+
+.style-option img {
+  display: block;
+  width: 112px;
+  height: 112px;
+  border-radius: 8px;
+}
+
+.style-option span {
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.style-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.settings-status {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+@media (max-width: 340px) {
+  .settings-drawer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .style-option {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-button,
+  .settings-drawer,
+  .settings-drawer::backdrop {
+    transition: none;
+  }
+}
