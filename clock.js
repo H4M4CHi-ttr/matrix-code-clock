@@ -115,8 +115,8 @@ function encode(time) {
   return { ...time, points, finders, format };
 }
 
-function drawCells(points, opacity = 1) {
-  context.globalAlpha = opacity;
+function drawCells(points) {
+  context.globalAlpha = 1;
   for (const point of points) {
     if (!point) continue;
 
@@ -161,12 +161,12 @@ function drawMoves(moves, progress) {
     const t = ease(unit((progress - delay) / duration));
     const remaining = 1 - t;
     const middle = 2 * remaining * t;
-    const opacity = entering ? t : leaving ? remaining : 1;
-    if (opacity === 0) continue;
+    const area = entering ? t : leaving ? remaining : 1;
+    if (area === 0) continue;
 
     const x = remaining ** 2 * from.x + middle * controlX + t ** 2 * to.x;
     const y = remaining ** 2 * from.y + middle * controlY + t ** 2 * to.y;
-    const radius = (from.radius * remaining + to.radius * t) * (1 - 0.26 * middle - 0.12 * (1 - opacity));
+    const radius = (from.radius * remaining + to.radius * t) * (1 - 0.26 * middle) * Math.sqrt(area);
     const rest = t === 0 ? from : t === 1 ? to : null;
 
     context.beginPath();
@@ -175,7 +175,7 @@ function drawMoves(moves, progress) {
     } else {
       context.arc(x, y, radius, 0, 2 * Math.PI);
     }
-    context.globalAlpha = opacity;
+    context.globalAlpha = 1;
     context.fillStyle = (t < 0.5 ? from : to).fixed ? ink : gradient;
     context.fill();
     if (!entering && !leaving && middle > 0) {
@@ -187,8 +187,6 @@ function drawMoves(moves, progress) {
 }
 
 function planChanges(current, target) {
-  const reserved = new Set([...current.format, ...target.format]);
-  const oldFormat = [];
   const stationary = [];
   const departing = new Set();
   const arriving = new Set();
@@ -197,9 +195,7 @@ function planChanges(current, target) {
     const before = current.points[cell.index];
     const after = target.points[cell.index];
 
-    if (reserved.has(cell)) {
-      if (before) oldFormat.push(before);
-    } else if (before && after) {
+    if (before && after) {
       if (before.radius === after.radius && before.square === after.square && before.fixed === after.fixed) {
         stationary.push(after);
       } else {
@@ -230,7 +226,26 @@ function planChanges(current, target) {
   }
   for (const from of departing) changes.push({ from });
   for (const to of arriving) changes.push({ to });
-  return { stationary, changes, reserved, oldFormat };
+  return { stationary, changes };
+}
+
+function withholdFormat(positions, progress, turning) {
+  // Clear the sampling centers while keeping the surrounding dots visible.
+  const start = ease(unit(progress * 5));
+  const end = ease(unit((progress - 0.6) / 0.4));
+  // Moving finders can shift where readers sample the format cells.
+  const extent = turning ? 0.35 : 0.27 - 0.05 * end;
+  const radius = CELL * extent * start;
+
+  context.save();
+  context.globalCompositeOperation = "destination-out";
+  context.beginPath();
+  for (const { x, y } of positions) {
+    context.moveTo(x + radius, y);
+    context.arc(x, y, radius, 0, 2 * Math.PI);
+  }
+  context.fill();
+  context.restore();
 }
 
 function atBoundary(boundary, origin) {
@@ -259,7 +274,8 @@ function animate(current, boundary) {
     : (effectIndex + 1 + Math.floor(Math.random() * (effects.length - 1))) % effects.length;
   const effect = effects[effectIndex];
   const direction = Math.random() < 0.5 ? -1 : 1;
-  const { stationary, changes, reserved, oldFormat } = planChanges(current, target);
+  const { stationary, changes } = planChanges(current, target);
+  const formatPositions = new Set([...current.format, ...target.format]);
 
   const moves = changes.map(({ from, to }) => {
     const origin = from ?? to;
@@ -278,8 +294,8 @@ function animate(current, boundary) {
       controlY: boundCenter((origin.y + destination.y) / 2 + dx * bend),
       entering: !from,
       leaving: !to,
-      delay: !from ? 0.17 + offset : !to ? offset * 0.65 : offset,
-      duration: from && to ? 0.68 : 0.5,
+      delay: !from ? 0.14 + offset * 0.62 : !to ? offset * 0.65 : offset,
+      duration: 0.68,
     };
   });
 
@@ -295,12 +311,7 @@ function animate(current, boundary) {
     drawMoves(moves, progress);
     drawCells(stationary);
 
-    // Withhold both copies of the QR format bits until their second arrives.
-    for (const { x, y } of reserved) {
-      context.clearRect(x - CELL / 2, y - CELL / 2, CELL, CELL);
-    }
-    const fade = 1 - ease(unit(progress * 5));
-    if (fade > 0) drawCells(oldFormat, fade);
+    withholdFormat(formatPositions, progress, current.quarter !== target.quarter);
     drawFinders(current.finders, target.finders, ease(progress));
     frame = requestAnimationFrame(step);
   }
