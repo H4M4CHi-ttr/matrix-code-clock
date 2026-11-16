@@ -73,6 +73,37 @@ let gradient;
 let flash;
 let effectIndex = -1;
 
+const devtoolsComment = document.createComment("");
+document.body.prepend(devtoolsComment);
+let devtoolsPayload;
+
+function updateDevtools(symbol) {
+  if (devtoolsPayload === symbol.payload) return;
+  devtoolsPayload = symbol.payload;
+
+  const modules = new Uint8Array(MODULES ** 2);
+  const layout = layouts[symbol.quarter].tiles;
+  for (const { index, column, row } of cells) {
+    modules[layout[index].index] = symbol.qr.getModule(column, row);
+  }
+  const isDark = (column, row) => column >= 0 && column < MODULES
+    && row >= 0 && row < MODULES && modules[row * MODULES + column];
+  const blocks = ["\u00a0", "▄", "▀", "█"];
+  const lines = [];
+  for (let row = -QUIET; row < MODULES + QUIET; row += 2) {
+    let line = "";
+    for (let column = -QUIET; column < MODULES + QUIET; column++) {
+      line += blocks[(isDark(column, row) ? 2 : 0) + (isDark(column, row + 1) ? 1 : 0)];
+    }
+    lines.push(line);
+  }
+
+  const text = lines.join("\n");
+  devtoolsComment.data = "\nひみつの時計\n" + text + "\n";
+  console.clear();
+  console.log("%c" + text, 'color:#172d2e;background:#f5fcf4;font:12px/14.4px "Courier New",monospace;white-space:pre;');
+}
+
 function setTheme(hour) {
   let theme = "night";
   if (hour >= 5 && hour < 9) theme = "dawn";
@@ -110,7 +141,7 @@ function encode(time) {
       points[tile.index] = squareStyle ? { ...tile, square: true } : tile;
     }
   }
-  return { ...time, points, finders };
+  return { ...time, points, finders, qr };
 }
 
 function drawCells(points) {
@@ -293,6 +324,7 @@ function animate(current, boundary, settleAt) {
       clock.dateTime = target.payload;
       clock.textContent = target.payload;
       setTheme(target.hour);
+      updateDevtools(target);
     }
 
     const progress = unit(1 - (settleAt - now) / DURATION);
@@ -323,6 +355,7 @@ function refresh() {
   clock.dateTime = current.payload;
   clock.textContent = current.payload;
   setTheme(current.hour);
+  updateDevtools(current);
   draw(current);
 
   const boundary = timestamp + 1000;
