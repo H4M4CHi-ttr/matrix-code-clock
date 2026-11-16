@@ -3,6 +3,7 @@ const clock = document.querySelector("#time");
 const root = document.documentElement;
 const canvas = document.querySelector("#matrix");
 const context = canvas.getContext("2d");
+const finderRectangle = (context.roundRect ?? context.rect).bind(context);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 const VERSION = 2;
@@ -140,9 +141,11 @@ function drawFinders(origins, destinations = origins, progress = 0) {
     const x = from.x + (to.x - from.x) * progress;
     const y = from.y + (to.y - from.y) * progress;
     context.clearRect(x - 4.5 * CELL, y - 4.5 * CELL, 9 * CELL, 9 * CELL);
-    context.fillRect(x - 3.5 * CELL, y - 3.5 * CELL, 7 * CELL, 7 * CELL);
-    context.clearRect(x - 2.5 * CELL, y - 2.5 * CELL, 5 * CELL, 5 * CELL);
-    context.fillRect(x - 1.5 * CELL, y - 1.5 * CELL, 3 * CELL, 3 * CELL);
+    context.beginPath();
+    finderRectangle(x - 3.5 * CELL, y - 3.5 * CELL, 7 * CELL, 7 * CELL, 0.65 * CELL);
+    finderRectangle(x - 2.5 * CELL, y - 2.5 * CELL, 5 * CELL, 5 * CELL, 0.5 * CELL);
+    finderRectangle(x - 1.5 * CELL, y - 1.5 * CELL, 3 * CELL, 3 * CELL, 0.38 * CELL);
+    context.fill("evenodd");
   }
 }
 
