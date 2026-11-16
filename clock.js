@@ -11,7 +11,9 @@ const QUIET = 4;
 const CELL = 24;
 const DURATION = 480;
 
-canvas.width = canvas.height = (MODULES + QUIET * 2) * CELL;
+const SIDE = (MODULES + QUIET * 2) * CELL;
+const CENTER = SIDE / 2;
+canvas.width = canvas.height = SIDE;
 
 const cells = Array.from({ length: MODULES ** 2 }, (_, index) => {
   const column = index % MODULES;
@@ -23,18 +25,30 @@ const cells = Array.from({ length: MODULES ** 2 }, (_, index) => {
   return {
     column,
     row,
-    x: (column + QUIET) * CELL,
-    y: (row + QUIET) * CELL,
+    x: (column + QUIET + 0.5) * CELL,
+    y: (row + QUIET + 0.5) * CELL,
     fixed: finder || alignment || row === 6 || column === 6,
   };
 });
 
+const signedRandom = () => Math.random() * 2 - 1;
+
 const effects = [
-  (x, y) => (x + y + 2) / 4, // Diagonal sweep
-  (x, y) => Math.hypot(x, y) * Math.SQRT1_2, // Ripple
-  (x, y) => (Math.atan2(y, x) / (2 * Math.PI) + Math.hypot(x, y) * 0.6 + 1) % 1, // Spiral
-  (x) => Math.round((x + 1) * 2) / 4, // Shutters
-  () => Math.random(), // Scatter
+  (x, y) => [x * 1.46 + signedRandom() * 0.32, y * 1.46 + signedRandom() * 0.32], // Burst
+  (x, y, direction) => { // Vortex
+    const angle = direction * (1.1 + Math.hypot(x, y) * 1.9);
+    const cosine = Math.cos(angle);
+    const sine = Math.sin(angle);
+    return [(x * cosine - y * sine) * 1.28, (x * sine + y * cosine) * 1.28];
+  },
+  (x, y) => { // Crossing streams
+    const edge = Math.sign(signedRandom()) * (0.78 + Math.random() * 0.2);
+    return Math.random() < 0.5
+      ? [edge, y * 0.65 + signedRandom() * 0.55]
+      : [x * 0.65 + signedRandom() * 0.55, edge];
+  },
+  (x, y, direction) => [x + direction * Math.sin(y * 5) * 0.72, y * 1.33 + Math.sin(x * 4) * 0.26], // Wave
+  () => [signedRandom(), signedRandom()], // Scatter
 ];
 
 let matrix;
@@ -62,69 +76,91 @@ function setTheme(hour) {
   gradient.addColorStop(1, style.getPropertyValue("--ink-end").trim());
 }
 
-function draw(transition, progress = 1) {
-  context.clearRect(0, 0, canvas.width, canvas.height);
+function draw() {
+  context.clearRect(0, 0, SIDE, SIDE);
 
-  for (const [index, cell] of cells.entries()) {
-    const { column, row, x, y, fixed } = cell;
-    const filled = matrix.getModule(column, row);
-    let pulse = 0;
-    let changed = false;
-
-    if (transition && !fixed) {
-      const start = transition.delays[index] * 0.58;
-      const phase = (progress - start) / 0.42;
-      if (phase > 0 && phase < 1) {
-        pulse = Math.sin(phase * Math.PI);
-        changed = transition.previous.getModule(column, row) !== filled;
-      }
-    }
-
-    if (filled) {
-      const inset = Math.round(CELL * pulse * (changed ? 0.15 : 0.05));
-      const edge = CELL - inset * 2;
-      context.fillStyle = fixed ? ink : gradient;
-      context.fillRect(x + inset, y + inset, edge, edge);
-
-      if (pulse > 0) {
-        context.globalAlpha = pulse * (changed ? 1 : 0.7);
-        context.fillStyle = flash;
-        context.fillRect(x + inset, y + inset, edge, edge);
-        context.globalAlpha = 1;
-      }
-    } else if (changed) {
-      const edge = Math.round(CELL * 0.8 * pulse);
-      const inset = Math.floor((CELL - edge) / 2);
-      context.globalAlpha = pulse * 0.18;
-      context.fillStyle = flash;
-      context.fillRect(x + inset, y + inset, edge, edge);
-      context.globalAlpha = 1;
-    }
+  for (const { column, row, x, y, fixed } of cells) {
+    if (!matrix.getModule(column, row)) continue;
+    context.fillStyle = fixed ? ink : gradient;
+    context.fillRect(x - CELL / 2, y - CELL / 2, CELL, CELL);
   }
 }
 
-function animate(previous, age) {
-  effectIndex = (effectIndex + 1 + Math.floor(Math.random() * (effects.length - 1))) % effects.length;
-  const order = effects[effectIndex];
-  const angle = Math.floor(Math.random() * 4) * Math.PI / 2;
-  const cosine = Math.cos(angle);
-  const sine = Math.sin(angle);
-  const reversed = Math.random() < 0.5;
-  const center = (MODULES - 1) / 2;
-  const delays = cells.map(({ column, row }) => {
-    const x = (column - center) / center;
-    const y = (row - center) / center;
-    const delay = order(x * cosine - y * sine, x * sine + y * cosine);
-    return reversed ? 1 - delay : delay;
-  });
+function drawFlights(flights, progress) {
+  context.clearRect(0, 0, SIDE, SIDE);
 
-  const transition = { previous, delays };
+  for (const { from, to, bendX, bendY, enters, leaves, delay, duration, tint } of flights) {
+    const phase = Math.max(0, Math.min(1, (progress - delay) / duration));
+    const t = phase * phase * (3 - 2 * phase);
+    const bend = 4 * t * (1 - t);
+    const opacity = (enters ? t : 1) * (leaves ? 1 - t : 1);
+    if (opacity === 0) continue;
+
+    const x = from.x + (to.x - from.x) * t + bendX * bend;
+    const y = from.y + (to.y - from.y) * t + bendY * bend;
+    const size = CELL * (1 - 0.59 * bend) * (0.72 + 0.28 * opacity);
+    const left = x - size / 2;
+    const top = y - size / 2;
+
+    context.beginPath();
+    if (context.roundRect) {
+      context.roundRect(left, top, size, size, size * bend / 2);
+    } else {
+      context.rect(left, top, size, size);
+    }
+    context.globalAlpha = opacity;
+    context.fillStyle = (t < 0.5 ? from : to).fixed ? ink : gradient;
+    context.fill();
+    if (bend > 0) {
+      context.globalAlpha = opacity * bend * tint;
+      context.fillStyle = flash;
+      context.fill();
+    }
+  }
+
+  context.globalAlpha = 1;
+}
+
+function animate(previous, age) {
+  effectIndex = effectIndex < 0
+    ? Math.floor(Math.random() * effects.length)
+    : (effectIndex + 1 + Math.floor(Math.random() * (effects.length - 1))) % effects.length;
+  const waypoint = effects[effectIndex];
+  const direction = Math.random() < 0.5 ? -1 : 1;
+  const origin = cells.filter(({ column, row }) => previous.getModule(column, row));
+  const destination = cells.filter(({ column, row }) => matrix.getModule(column, row));
+  const count = Math.max(origin.length, destination.length);
+
+  // Pair by scan order and spread surplus particles across the whole code.
+  const flights = Array.from({ length: count }, (_, index) => {
+    const originIndex = Math.floor(index * origin.length / count);
+    const destinationIndex = Math.floor(index * destination.length / count);
+    const from = origin[originIndex];
+    const to = destination[destinationIndex];
+    const [x, y] = waypoint((from.x - CENTER) / CENTER, (from.y - CENTER) / CENTER, direction);
+    const limit = 0.90 + Math.random() * 0.06;
+    const midX = CENTER * (1 + Math.max(-limit, Math.min(limit, x)));
+    const midY = CENTER * (1 + Math.max(-limit, Math.min(limit, y)));
+    const delay = Math.random() * 0.1;
+
+    return {
+      from,
+      to,
+      bendX: midX - (from.x + to.x) / 2,
+      bendY: midY - (from.y + to.y) / 2,
+      enters: originIndex === Math.floor((index - 1) * origin.length / count),
+      leaves: destinationIndex === Math.floor((index - 1) * destination.length / count),
+      delay,
+      duration: 1 - delay - Math.random() * 0.1,
+      tint: 0.2 + Math.random() * 0.8,
+    };
+  });
   const start = performance.now() - age;
 
   function step(timestamp) {
     const progress = (timestamp - start) / DURATION;
     if (progress < 1) {
-      draw(transition, progress);
+      drawFlights(flights, progress);
       frame = requestAnimationFrame(step);
     } else {
       draw();
