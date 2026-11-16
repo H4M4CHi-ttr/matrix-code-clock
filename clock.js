@@ -10,7 +10,7 @@ const VERSION = 2;
 const MODULES = VERSION * 4 + 17;
 const QUIET = 4;
 const CELL = 24;
-const DURATION = 360;
+const DURATION = 480;
 const SIDE = (MODULES + QUIET * 2) * CELL;
 const CENTER = SIDE / 2;
 const NEAR_EDGE = (QUIET + 0.5) * CELL;
@@ -25,8 +25,6 @@ const cells = Array.from({ length: MODULES ** 2 }, (_, index) => {
     || (column < 7 && row >= MODULES - 7);
   const alignment = column >= 16 && column <= 20 && row >= 16 && row <= 20;
   const timing = row === 6 || column === 6;
-  const format = (row === 8 && ((column <= 8 && column !== 6) || column >= MODULES - 8))
-    || (column === 8 && ((row < 8 && row !== 6) || row >= MODULES - 7));
 
   return {
     index,
@@ -35,7 +33,6 @@ const cells = Array.from({ length: MODULES ** 2 }, (_, index) => {
     x: (column + QUIET + 0.5) * CELL,
     y: (row + QUIET + 0.5) * CELL,
     finder,
-    format,
     square: alignment,
     fixed: alignment || timing,
     radius: CELL * (timing ? 0.49 : 0.46),
@@ -58,7 +55,6 @@ const layouts = [
     square,
   })),
   finders: finderCenters.map((index) => layout[index]),
-  format: cells.filter(({ format }) => format).map(({ index }) => layout[index]),
 }));
 
 const effects = [
@@ -105,7 +101,7 @@ function timeAt(timestamp) {
 
 function encode(time) {
   const qr = QrCode.encodeSegments([QrSegment.makeAlphanumeric(time.payload)], QrCode.Ecc.HIGH, VERSION, VERSION);
-  const { tiles, finders, format } = layouts[time.quarter];
+  const { tiles, finders } = layouts[time.quarter];
   const points = Array(cells.length).fill(null);
   for (const { index, column, row, finder } of cells) {
     if (!finder && qr.getModule(column, row)) {
@@ -113,7 +109,7 @@ function encode(time) {
       points[tile.index] = tile;
     }
   }
-  return { ...time, points, finders, format };
+  return { ...time, points, finders };
 }
 
 function drawCells(points) {
@@ -169,19 +165,22 @@ function drawMoves(moves, progress) {
 
     const x = remaining ** 2 * from.x + middle * controlX + t ** 2 * to.x;
     const y = remaining ** 2 * from.y + middle * controlY + t ** 2 * to.y;
-    const radius = (from.radius * remaining + to.radius * t) * (1 - 0.26 * middle) * Math.sqrt(area);
-    const rest = t === 0 ? from : t === 1 ? to : null;
+    const moving = from.x !== to.x || from.y !== to.y;
+    const fromRadius = from.square ? CELL / 2 : from.radius;
+    const toRadius = to.square ? CELL / 2 : to.radius;
+    const radius = (fromRadius * remaining + toRadius * t) * (1 - (moving ? 0.26 * middle : 0)) * Math.sqrt(area);
+    const corner = ((from.square ? 0 : remaining) + (to.square ? 0 : t)) * radius;
 
     context.beginPath();
-    if (rest?.square) {
-      context.rect(x - CELL / 2, y - CELL / 2, CELL, CELL);
+    if (corner < radius) {
+      finderRectangle(x - radius, y - radius, radius * 2, radius * 2, corner);
     } else {
       context.arc(x, y, radius, 0, 2 * Math.PI);
     }
     context.globalAlpha = 1;
     context.fillStyle = (t < 0.5 ? from : to).fixed ? ink : gradient;
     context.fill();
-    if (!entering && !leaving && middle > 0) {
+    if (moving && middle > 0) {
       context.globalAlpha = middle * 0.68;
       context.fillStyle = flash;
       context.fill();
@@ -220,7 +219,7 @@ function planChanges(current, target) {
   }
   candidates.sort((a, b) => a.distance - b.distance);
 
-  // Prefer short moves. Unpaired cells fade in or out at their own position.
+  // Prefer short moves. Unpaired cells shrink or grow at their own position.
   for (const { from, to } of candidates) {
     if (!departing.has(from) || !arriving.has(to)) continue;
     departing.delete(from);
@@ -230,25 +229,6 @@ function planChanges(current, target) {
   for (const from of departing) changes.push({ from });
   for (const to of arriving) changes.push({ to });
   return { stationary, changes };
-}
-
-function withholdFormat(positions, progress, turning) {
-  // Clear the sampling centers while keeping the surrounding dots visible.
-  const start = ease(unit(progress * 5));
-  const end = ease(unit((progress - 0.6) / 0.4));
-  // Moving finders can shift where readers sample the format cells.
-  const extent = turning ? 0.35 : 0.27 - 0.05 * end;
-  const radius = CELL * extent * start;
-
-  context.save();
-  context.globalCompositeOperation = "destination-out";
-  context.beginPath();
-  for (const { x, y } of positions) {
-    context.moveTo(x + radius, y);
-    context.arc(x, y, radius, 0, 2 * Math.PI);
-  }
-  context.fill();
-  context.restore();
 }
 
 function atBoundary(boundary, origin) {
@@ -263,7 +243,7 @@ function atBoundary(boundary, origin) {
   timer = setTimeout(commit, Math.max(0, boundary - Date.now()));
 }
 
-function animate(current, boundary) {
+function animate(current, boundary, settleAt) {
   const now = Date.now();
   if (now >= boundary || now < current.timestamp) {
     refresh();
@@ -278,7 +258,6 @@ function animate(current, boundary) {
   const effect = effects[effectIndex];
   const direction = Math.random() < 0.5 ? -1 : 1;
   const { stationary, changes } = planChanges(current, target);
-  const formatPositions = new Set([...current.format, ...target.format]);
 
   const moves = changes.map(({ from, to }) => {
     const origin = from ?? to;
@@ -304,22 +283,27 @@ function animate(current, boundary) {
 
   function step() {
     const now = Date.now();
-    if (now >= boundary || now < current.timestamp) {
+    if (now >= settleAt || now < current.timestamp) {
       refresh();
       return;
     }
 
-    const progress = unit(1 - (boundary - now) / DURATION);
+    if (now >= boundary && clock.dateTime !== target.payload) {
+      clock.dateTime = target.payload;
+      clock.textContent = target.payload;
+      setTheme(target.hour);
+    }
+
+    const progress = unit(1 - (settleAt - now) / DURATION);
     context.clearRect(0, 0, SIDE, SIDE);
     drawMoves(moves, progress);
     drawCells(stationary);
 
-    withholdFormat(formatPositions, progress, current.quarter !== target.quarter);
     drawFinders(current.finders, target.finders, ease(progress));
     frame = requestAnimationFrame(step);
   }
 
-  atBoundary(boundary, current.timestamp);
+  atBoundary(settleAt, current.timestamp);
   step();
 }
 
@@ -341,11 +325,13 @@ function refresh() {
   draw(current);
 
   const boundary = timestamp + 1000;
+  // Readers recognize the code before all dots settle; offset that measured lead.
+  const settleAt = boundary + (current.quarter === timeAt(boundary).quarter ? 120 : 48);
   const remaining = boundary - Date.now();
   if (reducedMotion.matches || remaining < DURATION / 2) {
     atBoundary(boundary, timestamp);
   } else {
-    timer = setTimeout(() => animate(current, boundary), Math.max(0, remaining - DURATION));
+    timer = setTimeout(() => animate(current, boundary, settleAt), Math.max(0, settleAt - DURATION - Date.now()));
   }
 }
 
