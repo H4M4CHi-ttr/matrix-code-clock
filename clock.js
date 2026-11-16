@@ -81,13 +81,7 @@ function updateDevtools(symbol) {
   if (devtoolsPayload === symbol.payload) return;
   devtoolsPayload = symbol.payload;
 
-  const modules = new Uint8Array(MODULES ** 2);
-  const layout = layouts[symbol.quarter].tiles;
-  for (const { index, column, row } of cells) {
-    modules[layout[index].index] = symbol.qr.getModule(column, row);
-  }
-  const isDark = (column, row) => column >= 0 && column < MODULES
-    && row >= 0 && row < MODULES && modules[row * MODULES + column];
+  const isDark = (column, row) => symbol.qr.getModule(column, row);
   const blocks = ["\u00a0", "▄", "▀", "█"];
   const lines = [];
   for (let row = -QUIET; row < MODULES + QUIET; row += 2) {
