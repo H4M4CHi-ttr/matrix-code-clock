@@ -4,6 +4,7 @@
   --glow: #faffdf;
   --paper: #f5fcf4;
   --ink: #172d2e;
+  --cue: #3f5b55;
   --ink-end: #28594d;
   --flash: #087b68;
   --dial: #277262;
@@ -15,6 +16,7 @@
   --glow: #ffedc4;
   --paper: #fff8ed;
   --ink: #392135;
+  --cue: #6d4a50;
   --ink-end: #773b46;
   --flash: #a74626;
   --dial: #b05826;
@@ -27,6 +29,7 @@
   --glow: #654c6e;
   --paper: #fbf1f7;
   --ink: #322043;
+  --cue: #6d4b63;
   --ink-end: #6a3a63;
   --flash: #96397a;
   --dial: #985176;
@@ -39,6 +42,7 @@
   --glow: #343052;
   --paper: #f1effa;
   --ink: #24193d;
+  --cue: #55486e;
   --ink-end: #444580;
   --flash: #6351a8;
   --dial: #5a4d9b;
@@ -72,6 +76,12 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+#finder-cues {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .dial {

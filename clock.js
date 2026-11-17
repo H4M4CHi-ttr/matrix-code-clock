@@ -4,6 +4,9 @@ const root = document.documentElement;
 const canvas = document.querySelector("#matrix");
 const context = canvas.getContext("2d");
 const finderRectangle = (context.roundRect ?? context.rect).bind(context);
+const cueCanvas = document.querySelector("#finder-cues");
+const cueContext = cueCanvas.getContext("2d");
+const cueRectangle = (cueContext.roundRect ?? cueContext.rect).bind(cueContext);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 const VERSION = 2;
@@ -17,6 +20,8 @@ const NEAR_EDGE = (QUIET + 0.5) * CELL;
 const FAR_EDGE = SIDE - NEAR_EDGE;
 const LAST = MODULES - 1;
 canvas.width = canvas.height = SIDE;
+cueCanvas.width = cueCanvas.height = SIDE;
+const finderPositions = [{}, {}, {}];
 
 const cells = Array.from({ length: MODULES ** 2 }, (_, index) => {
   const column = index % MODULES;
@@ -67,8 +72,10 @@ const effects = [
 
 let timer;
 let frame;
+let cueFrame;
 let prepared;
 let ink;
+let cueInk;
 let gradient;
 let flash;
 let effectIndex = -1;
@@ -116,6 +123,7 @@ function setTheme(hour) {
   root.dataset.theme = theme;
   const style = getComputedStyle(root);
   ink = style.getPropertyValue("--ink").trim();
+  cueInk = style.getPropertyValue("--cue").trim();
   flash = style.getPropertyValue("--flash").trim();
   gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
   gradient.addColorStop(0, ink);
@@ -170,6 +178,8 @@ function drawFinders(origins, destinations = origins, progress = 0) {
     const to = destinations[index];
     const x = from.x + (to.x - from.x) * progress;
     const y = from.y + (to.y - from.y) * progress;
+    finderPositions[index].x = x;
+    finderPositions[index].y = y;
     context.clearRect(x - 4.5 * CELL, y - 4.5 * CELL, 9 * CELL, 9 * CELL);
     context.beginPath();
     finderRectangle(x - 3.5 * CELL, y - 3.5 * CELL, 7 * CELL, 7 * CELL, 0.65 * CELL);
@@ -177,6 +187,107 @@ function drawFinders(origins, destinations = origins, progress = 0) {
     finderRectangle(x - 1.5 * CELL, y - 1.5 * CELL, 3 * CELL, 3 * CELL, 0.38 * CELL);
     context.fill("evenodd");
   }
+  drawTimeCues();
+}
+
+function finderRimPoint(fraction) {
+  const radius = 0.32;
+  const sideLength = 6 - 2 * radius;
+  const arcLength = Math.PI * radius / 2;
+  const perimeter = (sideLength + arcLength) * 4;
+  let distance = ((fraction * perimeter - arcLength / 2) % perimeter + perimeter) % perimeter;
+  const side = Math.floor(distance / (sideLength + arcLength));
+  distance -= side * (sideLength + arcLength);
+  let x, y;
+  if (distance <= sideLength) {
+    x = 0.5 + radius + distance;
+    y = 0.5;
+  } else {
+    const angle = -Math.PI / 2 + (distance - sideLength) / radius;
+    x = 6.5 - radius + radius * Math.cos(angle);
+    y = 0.5 + radius + radius * Math.sin(angle);
+  }
+  for (let turn = 0; turn < side; turn++) [x, y] = [7 - y, x];
+  return [x, y];
+}
+
+function traceFinderRim(start, end, opacity = 1) {
+  if (end <= start) return;
+  cueContext.globalAlpha = opacity;
+  cueContext.beginPath();
+  const steps = Math.max(2, Math.ceil((end - start) * 320));
+  for (let index = 0; index <= steps; index++) {
+    const [x, y] = finderRimPoint(start + (end - start) * index / steps);
+    if (index === 0) cueContext.moveTo(x, y);
+    else cueContext.lineTo(x, y);
+  }
+  cueContext.stroke();
+  cueContext.globalAlpha = 1;
+}
+
+function drawTimeCues() {
+  const date = new Date(Date.now());
+  const second = date.getSeconds() + (reducedMotion.matches ? 0 : date.getMilliseconds() / 1000);
+  cueContext.clearRect(0, 0, SIDE, SIDE);
+  for (const [index, { x, y }] of finderPositions.entries()) {
+    cueContext.save();
+    cueContext.translate(x - 3.5 * CELL, y - 3.5 * CELL);
+    cueContext.scale(CELL, CELL);
+    cueContext.beginPath();
+    cueRectangle(0, 0, 7, 7, 0.65);
+    cueRectangle(1, 1, 5, 5, 0.5);
+    cueContext.clip("evenodd");
+    cueContext.fillStyle = cueContext.strokeStyle = cueInk;
+    cueContext.lineCap = cueContext.lineJoin = "round";
+
+    // Native finder order is minute, second, hour; each keeps its role while sliding.
+    if (index === 2) {
+      const hour = date.getHours();
+      const step = hour % 6;
+      const [dx, dy] = [[step, 0], [6, step], [6 - step, 6], [0, 6 - step]][Math.floor(hour / 6)];
+      cueContext.beginPath();
+      cueContext.arc(dx + 0.5, dy + 0.5, 0.32, 0, 2 * Math.PI);
+      cueContext.fill();
+    } else {
+      const count = index === 0 ? 15 : 60;
+      for (let mark = 0; mark < count; mark++) {
+        const [dx, dy] = finderRimPoint(mark / count);
+        const major = mark % 5 === 0;
+        const length = Math.hypot(dx - 3.5, dy - 3.5);
+        const half = major ? 0.135 : index === 0 ? 0.09 : 0.065;
+        const nx = (dx - 3.5) / length * half;
+        const ny = (dy - 3.5) / length * half;
+        cueContext.globalAlpha = major ? 0.54 : 0.32;
+        cueContext.lineWidth = major ? 0.055 : 0.035;
+        cueContext.beginPath();
+        cueContext.moveTo(dx - nx, dy - ny);
+        cueContext.lineTo(dx + nx, dy + ny);
+        cueContext.stroke();
+      }
+      cueContext.globalAlpha = 1;
+      cueContext.lineWidth = 0.08625;
+      if (index === 0) {
+        traceFinderRim(0, (date.getMinutes() % 15 + second / 60) / 15, 0.95);
+      } else {
+        const head = second / 60;
+        for (let segment = 0; segment < 30; segment++) {
+          traceFinderRim(head - 0.05 * (1 - segment / 30), head - 0.05 * (1 - (segment + 1) / 30),
+            0.08 + 0.67 * (segment / 30) ** 1.7);
+        }
+        const [dx, dy] = finderRimPoint(head);
+        cueContext.beginPath();
+        cueContext.arc(dx, dy, 0.14, 0, 2 * Math.PI);
+        cueContext.fill();
+      }
+    }
+    cueContext.restore();
+  }
+}
+
+function animateCues() {
+  if (document.hidden || reducedMotion.matches) return;
+  drawTimeCues();
+  cueFrame = requestAnimationFrame(animateCues);
 }
 
 function draw(symbol) {
@@ -345,6 +456,7 @@ function animate(current, boundary, settleAt) {
 function refresh() {
   clearTimeout(timer);
   cancelAnimationFrame(frame);
+  cancelAnimationFrame(cueFrame);
   if (document.hidden) {
     prepared = undefined;
     return;
@@ -359,6 +471,7 @@ function refresh() {
   setTheme(current.hour);
   updateDevtools(current);
   draw(current);
+  if (!reducedMotion.matches) cueFrame = requestAnimationFrame(animateCues);
 
   const boundary = timestamp + 1000;
   // Readers recognize the code before all dots settle; offset that measured lead.
