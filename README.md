@@ -2,7 +2,7 @@
 
 [日本語版を開く](https://h4m4chi-ttr.github.io/matrix-code-clock/) / [English](https://h4m4chi-ttr.github.io/matrix-code-clock/en/)
 
-ブラウザのローカル時刻を `HH:MM:SS`（24時間表記）でQRコードにします。
+ブラウザのローカル時刻を `HH:MM:SS`（24時間表記）で二次元コードにします。
 点が枠内を滑り、次の時刻のコードに並びます。余った点は縮んで消え、新しい点は小さな状態から広がります。動き出す順番と軌道は5種類から選ばれます。
 同じ位置に残る点は静止します。約0.48秒かけて切り替え、読み取れる時刻が秒の境目に近づくよう開始時刻を調整しています。
 
@@ -28,7 +28,7 @@
 
 `index.html` をブラウザで開くとローカルでも動作します。GitHub Pagesでは `main` ブランチのルートから配信します。
 
-QRコードの生成には [NayukiのQR Code generator v1.8.0](https://github.com/nayuki/QR-Code-generator/releases/tag/v1.8.0) を使用しています。ライセンスは `vendor/qrcodegen-v1.8.0.js` の先頭にあります。
+二次元コードの生成には [NayukiのQR Code generator v1.8.0](https://github.com/nayuki/QR-Code-generator/releases/tag/v1.8.0) を使用しています。ライセンスは `vendor/qrcodegen-v1.8.0.js` の先頭にあります。
 
 各言語のHTMLに検索向けのタイトル・説明、canonical、hreflang、共有用メタ情報、WebApplicationの構造化データを用意しています。
 [サイトマップ](https://h4m4chi-ttr.github.io/matrix-code-clock/sitemap.xml)には日本語版と英語版を掲載しています。
