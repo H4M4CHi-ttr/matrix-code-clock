@@ -33,3 +33,8 @@
 各言語のHTMLに検索向けのタイトル・説明、canonical、hreflang、共有用メタ情報、WebApplicationの構造化データを用意しています。
 [サイトマップ](https://h4m4chi-ttr.github.io/matrix-code-clock/sitemap.xml)には日本語版と英語版を掲載しています。
 Cloudflare Web Analyticsのタグを両言語のページに設置しています。
+
+## ライセンス
+
+本プロジェクトのソースコードは [MIT License](LICENSE) で公開しています。
+同梱ライブラリの著作権・ライセンス表記は、各ソースファイル内に保持しています。
