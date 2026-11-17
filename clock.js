@@ -92,8 +92,8 @@ function updateDevtools(symbol) {
     let line = "";
     for (let column = -QUIET; column < MODULES + QUIET; column++) {
       const dark = symbol.qr.getModule(column, row);
-      // Space forms the dark modules against the dark Elements-panel background.
-      line += dark ? "\u00a0\u00a0" : "██";
+      // EM SPACE matches the block width in Chrome's CJK fallback and Edge's Consolas.
+      line += dark ? "\u2003\u2003" : "██";
       if (dark) devtoolsContext.fillRect((column + QUIET) * 8, (row + QUIET) * 8, 8, 8);
     }
     lines.push(line);
