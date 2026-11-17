@@ -75,27 +75,34 @@ let effectIndex = -1;
 
 const devtoolsComment = document.createComment("");
 document.body.prepend(devtoolsComment);
+const devtoolsImage = document.createElement("canvas");
+devtoolsImage.width = devtoolsImage.height = (MODULES + QUIET * 2) * 8;
+const devtoolsContext = devtoolsImage.getContext("2d");
 let devtoolsPayload;
 
 function updateDevtools(symbol) {
   if (devtoolsPayload === symbol.payload) return;
   devtoolsPayload = symbol.payload;
 
-  const isDark = (column, row) => symbol.qr.getModule(column, row);
-  const blocks = ["\u00a0", "▄", "▀", "█"];
   const lines = [];
-  for (let row = -QUIET; row < MODULES + QUIET; row += 2) {
+  devtoolsContext.fillStyle = "#fff";
+  devtoolsContext.fillRect(0, 0, devtoolsImage.width, devtoolsImage.height);
+  devtoolsContext.fillStyle = "#000";
+  for (let row = -QUIET; row < MODULES + QUIET; row++) {
     let line = "";
     for (let column = -QUIET; column < MODULES + QUIET; column++) {
-      line += blocks[(isDark(column, row) ? 2 : 0) + (isDark(column, row + 1) ? 1 : 0)];
+      const dark = symbol.qr.getModule(column, row);
+      // Space forms the dark modules against the dark Elements-panel background.
+      line += dark ? "\u00a0\u00a0" : "██";
+      if (dark) devtoolsContext.fillRect((column + QUIET) * 8, (row + QUIET) * 8, 8, 8);
     }
     lines.push(line);
   }
 
-  const text = lines.join("\n");
-  devtoolsComment.data = "\nひみつの時計\n" + text + "\n";
+  devtoolsComment.data = "\nひみつの時計\n" + lines.join("\n") + "\n";
   console.clear();
-  console.log("%c" + text, 'color:#172d2e;background:#f5fcf4;font:12px/14.4px "Courier New",monospace;white-space:pre;');
+  console.log("%c\u00a0",
+    `font-size:0;line-height:0;padding:${devtoolsImage.width / 2}px;background:#fff url("${devtoolsImage.toDataURL()}") center no-repeat;`);
 }
 
 function setTheme(hour) {
