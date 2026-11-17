@@ -73,6 +73,7 @@ let gradient;
 let flash;
 let effectIndex = -1;
 
+const devtoolsTitle = root.lang === "en" ? "A hidden clock" : "ひみつの時計";
 const devtoolsComment = document.createComment("");
 document.body.prepend(devtoolsComment);
 const devtoolsImage = document.createElement("canvas");
@@ -99,7 +100,7 @@ function updateDevtools(symbol) {
     lines.push(line);
   }
 
-  devtoolsComment.data = "\nひみつの時計\n" + lines.join("\n") + "\n";
+  devtoolsComment.data = "\n" + devtoolsTitle + "\n" + lines.join("\n") + "\n";
   console.clear();
   console.log("%c\u00a0",
     `font-size:0;line-height:0;padding:${devtoolsImage.width / 2}px;background:#fff url("${devtoolsImage.toDataURL()}") center no-repeat;`);

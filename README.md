@@ -1,12 +1,12 @@
 # 二次元コード時計
 
-[時計を開く](https://h4m4chi-ttr.github.io/matrix-code-clock/)
+[日本語版を開く](https://h4m4chi-ttr.github.io/matrix-code-clock/) / [English](https://h4m4chi-ttr.github.io/matrix-code-clock/en/)
 
 ブラウザのローカル時刻を `HH:MM:SS`（24時間表記）でQRコードにします。
 点が枠内を滑り、次の時刻のコードに並びます。余った点は縮んで消え、新しい点は小さな状態から広がります。動き出す順番と軌道は5種類から選ばれます。
 同じ位置に残る点は静止します。約0.48秒かけて切り替え、読み取れる時刻が秒の境目に近づくよう開始時刻を調整しています。
 
-右上の設定で「まる」「しかく」を見本から選べます。初期表示は「まる」で、選択はブラウザに保存されます。
+右上の設定で「まる」「しかく」を見本から選べます。「言語 / Language」から日本語と英語を切り替えられます。初期表示は「まる」で、選択はブラウザに保存されます。
 設定アイコンはマウス操作やタップで現れ、約3秒の無操作、またはフォーカスが外れて約3秒後に隠れます。
 毎時15分、30分、45分、00分には、四角いファインダパターンが次の角へ時計回りにスライドします。00分の向きが正位置です。
 端末で動きを減らす設定にすると、秒の境目でコードと向きを即時に切り替えます。
@@ -21,3 +21,7 @@
 `index.html` をブラウザで開くとローカルでも動作します。GitHub Pagesでは `main` ブランチのルートから配信します。
 
 QRコードの生成には [NayukiのQR Code generator v1.8.0](https://github.com/nayuki/QR-Code-generator/releases/tag/v1.8.0) を使用しています。ライセンスは `vendor/qrcodegen-v1.8.0.js` の先頭にあります。
+
+各言語のHTMLに検索向けのタイトル・説明、canonical、hreflang、共有用メタ情報、WebApplicationの構造化データを用意しています。
+[サイトマップ](https://h4m4chi-ttr.github.io/matrix-code-clock/sitemap.xml)には日本語版と英語版を掲載しています。
+Cloudflare Web Analyticsのタグを両言語のページに設置しています。

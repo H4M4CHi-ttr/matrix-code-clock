@@ -229,13 +229,17 @@ canvas {
 }
 
 .settings-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 36px;
 }
 
-.settings-header h1 {
+.settings-header h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
@@ -338,4 +342,59 @@ canvas {
   .settings-drawer::backdrop {
     transition: none;
   }
+}
+
+
+.settings-language,
+.settings-about {
+  margin-top: 28px;
+}
+
+.settings-language h3,
+.settings-about h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.language-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.language-links a {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 8px;
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.language-links a[aria-current="page"] {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-weight: 600;
+}
+
+.language-links a:hover {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.language-links a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.settings-about {
+  padding-top: 20px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+.settings-about p {
+  margin: 8px 0 0;
+  font-size: 14px;
 }

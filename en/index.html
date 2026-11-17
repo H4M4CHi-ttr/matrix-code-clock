@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrix Code Clock | Your Local Time in a QR Code</title>
+  <meta name="description" content="A free browser clock that turns your local time into a QR code. Watch smooth, per-second transitions and day and night colors, with round or square dots.">
+  <link rel="canonical" href="https://h4m4chi-ttr.github.io/matrix-code-clock/en/">
+  <link rel="alternate" hreflang="ja" href="https://h4m4chi-ttr.github.io/matrix-code-clock/">
+  <link rel="alternate" hreflang="en" href="https://h4m4chi-ttr.github.io/matrix-code-clock/en/">
+  <link rel="alternate" hreflang="x-default" href="https://h4m4chi-ttr.github.io/matrix-code-clock/">
+  <link rel="icon" type="image/png" sizes="528x528" href="../assets/style-round.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Matrix Code Clock">
+  <meta property="og:title" content="Matrix Code Clock | Your Local Time in a QR Code">
+  <meta property="og:description" content="A free browser clock that turns your local time into a QR code. Watch smooth, per-second transitions and day and night colors, with round or square dots.">
+  <meta property="og:url" content="https://h4m4chi-ttr.github.io/matrix-code-clock/en/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ja_JP">
+  <meta property="og:image" content="https://h4m4chi-ttr.github.io/matrix-code-clock/assets/style-round.png">
+  <meta property="og:image:width" content="528">
+  <meta property="og:image:height" content="528">
+  <meta property="og:image:alt" content="Matrix Code Clock displaying the current time as a QR code with round dots">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Matrix Code Clock | Your Local Time in a QR Code">
+  <meta name="twitter:description" content="A free browser clock that turns your local time into a QR code. Watch smooth, per-second transitions and day and night colors, with round or square dots.">
+  <meta name="twitter:image" content="https://h4m4chi-ttr.github.io/matrix-code-clock/assets/style-round.png">
+  <meta name="twitter:image:alt" content="Matrix Code Clock displaying the current time as a QR code with round dots">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Matrix Code Clock",
+  "url": "https://h4m4chi-ttr.github.io/matrix-code-clock/en/",
+  "description": "A free browser clock that turns your local time into a QR code. Watch smooth, per-second transitions and day and night colors, with round or square dots.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires JavaScript",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
+  "image": "https://h4m4chi-ttr.github.io/matrix-code-clock/assets/style-round.png"
+}
+  </script>
+  <link rel="stylesheet" href="../clock.css?v=13">
+  <script defer src="../vendor/qrcodegen-v1.8.0.js"></script>
+  <script defer src="../settings.js?v=8"></script>
+  <script defer src="../clock.js?v=13"></script>
+  <noscript><style>.clock, .settings-button { display: none; }</style></noscript>
+</head>
+<body>
+  <main aria-labelledby="clock-title">
+    <h1 class="visually-hidden" id="clock-title">Matrix Code Clock</h1>
+    <time class="visually-hidden" id="time"></time>
+    <div class="clock" aria-hidden="true">
+      <canvas id="matrix"></canvas>
+      <span class="dial"></span>
+    </div>
+    <noscript>JavaScript is required to display the clock.</noscript>
+  </main>
+  <button class="settings-button" id="settings-button" type="button"
+    aria-label="Display settings" aria-haspopup="dialog" aria-controls="settings-drawer" aria-expanded="false">
+    <span aria-hidden="true">⚙︎</span>
+  </button>
+  <dialog class="settings-drawer" id="settings-drawer" aria-labelledby="settings-title">
+    <header class="settings-header">
+      <h2 id="settings-title">Settings</h2>
+      <button class="close-button" id="settings-close" type="button" aria-label="Close settings" autofocus>
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
+    <fieldset class="style-choices">
+      <legend>Dot shape</legend>
+      <label class="style-option">
+        <img src="../assets/style-round.png" alt="" width="112" height="112">
+        <span>Round</span>
+        <input type="radio" name="dot-style" value="round" checked>
+      </label>
+      <label class="style-option">
+        <img src="../assets/style-square.png" alt="" width="112" height="112">
+        <span>Square</span>
+        <input type="radio" name="dot-style" value="square">
+      </label>
+    </fieldset>
+    <p class="settings-status" id="settings-status" role="status" hidden>This browser cannot save your settings. Your selection will apply while this page is open.</p>
+    <section class="settings-language" aria-labelledby="language-title">
+      <h3 id="language-title">Language</h3>
+      <nav class="language-links" aria-label="Display language">
+        <a href="../" lang="ja" hreflang="ja">日本語</a>
+        <a href="../en/" lang="en" hreflang="en" aria-current="page">English</a>
+      </nav>
+    </section>
+    <section class="settings-about" aria-labelledby="about-title">
+      <h3 id="about-title">About this clock</h3>
+      <p>Scan the QR code to read this browser’s local time in 24-hour HH:MM:SS format. The dots move every second, and the colors change throughout the day.</p>
+    </section>
+  </dialog>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d2ba9cc87f1e47fe9663989d68b282ad"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
